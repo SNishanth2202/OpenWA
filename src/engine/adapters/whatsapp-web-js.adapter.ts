@@ -302,6 +302,7 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
     if (typeof media.data === 'string') {
       if (media.data.startsWith('http://') || media.data.startsWith('https://')) {
         // URL
+        this.validateMediaUrl(media.data);
         messageMedia = await MessageMedia.fromUrl(media.data);
       } else {
         // Base64
@@ -423,6 +424,7 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
 
     if (typeof media.data === 'string') {
       if (media.data.startsWith('http://') || media.data.startsWith('https://')) {
+        this.validateMediaUrl(media.data);
         messageMedia = await MessageMedia.fromUrl(media.data);
       } else {
         messageMedia = new MessageMedia(media.mimetype, media.data, media.filename);
@@ -796,6 +798,21 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
     } catch (error) {
       this.logger.warn(`Failed to get profile picture for ${contactId}: ${String(error)}`);
       return null;
+    }
+  }
+
+  private validateMediaUrl(url: string): void {
+    const parsedUrl = new URL(url);
+    const hostname = parsedUrl.hostname;
+    const isLocal = hostname === 'localhost' || 
+                    hostname === '127.0.0.1' ||
+                    hostname === '::1' ||
+                    hostname.startsWith('192.168.') ||
+                    hostname.startsWith('10.') ||
+                    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname);
+    
+    if (isLocal) {
+      throw new Error('SSRF Protection: Cannot fetch media from local network addresses.');
     }
   }
 

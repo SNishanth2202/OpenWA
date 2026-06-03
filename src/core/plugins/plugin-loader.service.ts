@@ -134,6 +134,10 @@ export class PluginLoaderService implements OnModuleInit {
 
       // Load the plugin instance if not already loaded
       if (!plugin.instance) {
+        if (process.env.ENABLE_UNSAFE_PLUGINS !== 'true') {
+          throw new Error('Dynamic user plugin loading is disabled for security reasons. Set ENABLE_UNSAFE_PLUGINS=true to enable.');
+        }
+
         const mainPath = path.join(this.pluginsDir, pluginId, plugin.manifest.main);
         // Dynamic require for user plugins
         // eslint-disable-next-line @typescript-eslint/no-require-imports

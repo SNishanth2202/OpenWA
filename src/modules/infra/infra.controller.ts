@@ -715,13 +715,15 @@ export class InfraController {
   async importStorage(
     @Body() body: { filePath: string },
   ): Promise<{ imported: boolean; count: number; storageType: string }> {
-    const { filePath } = body;
+    // Prevent path traversal by only allowing files in the data directory and using basename
+    const safeFilename = path.basename(body.filePath);
+    const safePath = path.resolve(process.cwd(), 'data', safeFilename);
 
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`File not found: ${filePath}`);
+    if (!fs.existsSync(safePath)) {
+      throw new Error(`File not found: ${safeFilename}`);
     }
 
-    const readStream = fs.createReadStream(filePath);
+    const readStream = fs.createReadStream(safePath);
     const count = await this.storageService.importFromStream(readStream);
 
     return {

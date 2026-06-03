@@ -48,6 +48,23 @@ export class WebhookProcessor extends WorkerHost {
     };
 
     try {
+      const parsedUrl = new URL(url);
+      if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+        throw new Error('SSRF Protection: Invalid URL protocol. Only http and https are allowed.');
+      }
+      
+      const hostname = parsedUrl.hostname;
+      const isLocal = hostname === 'localhost' || 
+                      hostname === '127.0.0.1' ||
+                      hostname === '::1' ||
+                      hostname.startsWith('192.168.') ||
+                      hostname.startsWith('10.') ||
+                      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname);
+                      
+      if (isLocal) {
+         throw new Error('SSRF Protection: Cannot send webhook to local network addresses.');
+      }
+
       const response = await fetch(url, {
         method: 'POST',
         headers: requestHeaders,

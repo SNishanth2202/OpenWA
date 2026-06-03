@@ -73,9 +73,9 @@ COPY --from=builder /app/dist ./dist
 RUN mkdir -p ./data/sessions ./data/media && \
     chown -R openwa:openwa /app
 
-# Note: Running as root to allow Docker socket access for orchestration
-# For production with stricter security, consider using a Docker socket proxy
-# USER openwa
+# Note: Running as openwa for security. If using orchestration, 
+# you may need to adjust Docker socket permissions on the host.
+USER openwa
 
 # Expose port
 EXPOSE 2785

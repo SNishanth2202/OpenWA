@@ -133,6 +133,7 @@ export class WebhookService {
     }
 
     try {
+      this.validateWebhookUrl(webhook.url);
       const response = await fetch(webhook.url, {
         method: 'POST',
         headers,
@@ -315,6 +316,7 @@ export class WebhookService {
     }
 
     try {
+      this.validateWebhookUrl(webhook.url);
       const response = await fetch(webhook.url, {
         method: 'POST',
         headers,
@@ -361,5 +363,24 @@ export class WebhookService {
 
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private validateWebhookUrl(url: string): void {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      throw new Error('SSRF Protection: Invalid URL protocol. Only http and https are allowed.');
+    }
+    
+    const hostname = parsedUrl.hostname;
+    const isLocal = hostname === 'localhost' || 
+                    hostname === '127.0.0.1' ||
+                    hostname === '::1' ||
+                    hostname.startsWith('192.168.') ||
+                    hostname.startsWith('10.') ||
+                    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname);
+                    
+    if (isLocal) {
+       throw new Error('SSRF Protection: Cannot send webhook to local network addresses.');
+    }
   }
 }

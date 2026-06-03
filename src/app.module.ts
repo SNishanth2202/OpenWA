@@ -54,7 +54,7 @@ if (process.env.QUEUE_ENABLED === 'true') {
         type: 'sqlite' as const,
         database: configService.get<string>('database.database', './data/main.sqlite'),
         entities: [__dirname + '/modules/auth/**/*.entity{.ts,.js}', __dirname + '/modules/audit/**/*.entity{.ts,.js}'],
-        synchronize: true,
+        synchronize: configService.get<boolean>('database.synchronize', false),
         logging: configService.get<boolean>('database.logging', false),
       }),
     }),
@@ -96,15 +96,14 @@ if (process.env.QUEUE_ENABLED === 'true') {
           };
         }
 
-        // SQLite: zero-config. Default to synchronize=true so the embedded
-        // database "just works" on first boot without a separate migration step.
-        // Users can opt out with DATABASE_SYNCHRONIZE=false to use migrations instead.
+        // SQLite: zero-config. Default to synchronize=false for security.
+        // Users can opt in with DATABASE_SYNCHRONIZE=true if needed.
         return {
           ...baseConfig,
           type: 'sqlite' as const,
           database: configService.get<string>('dataDatabase.database', './data/openwa.sqlite'),
-          synchronize: configService.get<boolean>('dataDatabase.synchronize', true),
-          migrationsRun: !configService.get<boolean>('dataDatabase.synchronize', true),
+          synchronize: configService.get<boolean>('dataDatabase.synchronize', false),
+          migrationsRun: !configService.get<boolean>('dataDatabase.synchronize', false),
         };
       },
     }),

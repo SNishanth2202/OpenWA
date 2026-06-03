@@ -20,37 +20,22 @@ export class AuthService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    // Seed a default API key if none exist
     const count = await this.apiKeyRepository.count();
     let displayKey: string;
     let isNewKey = false;
 
     if (count === 0) {
-      // Use predictable key in development, random key in production
-      displayKey =
-        process.env.NODE_ENV === 'production' ? `owa_k1_${randomBytes(32).toString('hex')}` : 'dev-admin-key';
-
+      displayKey = process.env.API_KEY || `owa_k1_${randomBytes(32).toString('hex')}`;
       await this.seedApiKey(displayKey, 'Default Admin Key', ApiKeyRole.ADMIN);
       isNewKey = true;
-
-      // Save raw key to file for startup script to read
-      try {
-        writeFileSync(API_KEY_FILE, displayKey, 'utf-8');
-      } catch (err) {
-        this.logger.warn('Could not save API key file', { error: String(err) });
-      }
+      
+      this.logger.warn(`========================================================`);
+      this.logger.warn(`No API key found in database. Generated a new API key:`);
+      this.logger.warn(`API_KEY=${displayKey}`);
+      this.logger.warn(`Please save this key securely! It will NOT be saved to disk.`);
+      this.logger.warn(`========================================================`);
     } else {
-      // Read saved API key from file if exists
-      if (existsSync(API_KEY_FILE)) {
-        try {
-          displayKey = readFileSync(API_KEY_FILE, 'utf-8').trim();
-        } catch (error) {
-          this.logger.warn(`Failed to read API key file: ${API_KEY_FILE}`, { error: String(error) });
-          displayKey = '(check dashboard for keys)';
-        }
-      } else {
-        displayKey = '(check dashboard for keys)';
-      }
+      displayKey = '(check dashboard for keys)';
     }
 
     // Always show the welcome banner on startup
