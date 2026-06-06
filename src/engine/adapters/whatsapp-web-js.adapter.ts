@@ -257,6 +257,10 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
     return this.status;
   }
 
+  private formatChatId(chatId: string): string {
+    return chatId.includes('@') ? chatId : `${chatId}@c.us`;
+  }
+
   getQRCode(): string | null {
     return this.qrCode;
   }
@@ -271,7 +275,8 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
 
   async sendTextMessage(chatId: string, text: string): Promise<MessageResult> {
     this.ensureReady();
-    const msg = await this.client!.sendMessage(chatId, text);
+    const formattedChatId = this.formatChatId(chatId);
+    const msg = await this.client!.sendMessage(formattedChatId, text);
     return {
       id: msg.id._serialized,
       timestamp: msg.timestamp,
@@ -296,6 +301,7 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
 
   private async sendMediaMessage(chatId: string, media: MediaInput): Promise<MessageResult> {
     this.ensureReady();
+    const formattedChatId = this.formatChatId(chatId);
 
     let messageMedia: MessageMedia;
 
@@ -313,7 +319,7 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
       messageMedia = new MessageMedia(media.mimetype, media.data.toString('base64'), media.filename);
     }
 
-    const msg = await this.client!.sendMessage(chatId, messageMedia, {
+    const msg = await this.client!.sendMessage(formattedChatId, messageMedia, {
       caption: media.caption,
     });
 
@@ -385,13 +391,14 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
 
   async sendLocationMessage(chatId: string, location: LocationInput): Promise<MessageResult> {
     this.ensureReady();
+    const formattedChatId = this.formatChatId(chatId);
     // Import Location class dynamically from whatsapp-web.js
     const { Location } = await import('whatsapp-web.js');
     const loc = new Location(location.latitude, location.longitude, {
       name: location.description || '',
       address: location.address || '',
     });
-    const msg = await this.client!.sendMessage(chatId, loc);
+    const msg = await this.client!.sendMessage(formattedChatId, loc);
     return {
       id: msg.id._serialized,
       timestamp: msg.timestamp,
@@ -400,6 +407,7 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
 
   async sendContactMessage(chatId: string, contact: ContactCard): Promise<MessageResult> {
     this.ensureReady();
+    const formattedChatId = this.formatChatId(chatId);
     // Create vCard format
     const vcard = [
       'BEGIN:VCARD',
@@ -409,7 +417,7 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
       'END:VCARD',
     ].join('\n');
 
-    const msg = await this.client!.sendMessage(chatId, vcard, {
+    const msg = await this.client!.sendMessage(formattedChatId, vcard, {
       parseVCards: true,
     });
     return {
@@ -420,6 +428,7 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
 
   async sendStickerMessage(chatId: string, media: MediaInput): Promise<MessageResult> {
     this.ensureReady();
+    const formattedChatId = this.formatChatId(chatId);
     let messageMedia: MessageMedia;
 
     if (typeof media.data === 'string') {
@@ -433,7 +442,7 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
       messageMedia = new MessageMedia(media.mimetype, media.data.toString('base64'), media.filename);
     }
 
-    const msg = await this.client!.sendMessage(chatId, messageMedia, {
+    const msg = await this.client!.sendMessage(formattedChatId, messageMedia, {
       sendMediaAsSticker: true,
     });
     return {

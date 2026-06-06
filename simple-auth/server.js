@@ -3,7 +3,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // The static key (32-character string) generated for your use
-const VALID_KEY = process.env.VALID_KEY
+const VALID_KEY = process.env.VALID_KEY || 'b63a9d74f28e1c5039a827bc4f1e5d9a'; // Replace with your actual key
 
 // Middleware to verify the key
 function verifyKey(req, res, next) {
